@@ -14,4 +14,10 @@ object Generators {
       output <- Gen.listOfN(size, Gen.alphaLowerChar)
     } yield output.mkString
 
+  lazy val withoutLowerCaseLetter =
+    for {
+      size   <- Gen.choose(9, 100)
+      output <- Gen.listOfN(size, Gen.alphaUpperChar)
+    } yield output.mkString
+
 }

@@ -25,4 +25,14 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
     }
   }
 
+  test("All passwords without at least one lowercase letter should validate to false") {
+    forAll(Generators.withoutLowerCaseLetter) { password =>
+      val result = PasswordValidator.validatePassword(password)
+
+      val expected = false
+
+      assertEquals(result, expected)
+    }
+  }
+
 }
