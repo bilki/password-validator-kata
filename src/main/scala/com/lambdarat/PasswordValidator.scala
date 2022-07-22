@@ -2,7 +2,8 @@ package com.lambdarat
 
 object PasswordValidator {
 
-  val MIN_PASSWORD_SIZE = 9
+  val MIN_PASSWORD_SIZE   = 9
+  val PASSWORD_UNDERSCORE = '_'
 
   type Rule = String => Boolean
 
@@ -10,7 +11,7 @@ object PasswordValidator {
   val upperCaseRule: Rule  = _.exists(_.isUpper)
   val lowerCaseRule: Rule  = _.exists(_.isLower)
   val digitRule: Rule      = _.exists(_.isDigit)
-  val underscoreRule: Rule = _.exists(_ == '_')
+  val underscoreRule: Rule = _.exists(_ == PASSWORD_UNDERSCORE)
 
   val allRules: List[Rule] = List(
     sizeRule,
