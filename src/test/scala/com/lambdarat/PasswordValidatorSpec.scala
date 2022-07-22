@@ -5,9 +5,13 @@ import org.scalacheck.Prop.{forAll, forAllNoShrink}
 
 class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
 
-  test("Property test") {
-    forAll { number: Int =>
-      assertEquals(-(-(number)), number)
+  test("All passwords with fewer than 9 chars should validate to false") {
+    forAll(Generators.fewerThanEightChars) { password =>
+      val result = PasswordValidator.validatePassword(password)
+
+      val expected = false
+
+      assertEquals(result, expected)
     }
   }
 
