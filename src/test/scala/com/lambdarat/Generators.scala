@@ -1,4 +1,4 @@
-package com.meetup.swcraftersmurcia
+package com.lambdarat
 
 import org.scalacheck.Gen
 

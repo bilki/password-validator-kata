@@ -1,3 +1,3 @@
-package com.meetup.swcraftersmurcia
+package com.lambdarat
 
 object Fixtures {}

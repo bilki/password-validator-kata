@@ -1,4 +1,4 @@
-package com.meetup.swcraftersmurcia
+package com.lambdarat
 
 import munit.{FunSuite, ScalaCheckSuite}
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
