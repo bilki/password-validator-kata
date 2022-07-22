@@ -7,9 +7,9 @@ import PasswordValidator.MIN_PASSWORD_SIZE
 
 object Generators {
 
-  lazy val fewerThanEightChars =
+  def fewerOrEqualThan(numberOfChars: Int): Gen[String] =
     Gen
-      .listOfN(MIN_PASSWORD_SIZE - 1, Arbitrary.arbChar.arbitrary)
+      .listOfN(numberOfChars, Arbitrary.arbChar.arbitrary)
       .map(_.mkString)
 
   lazy val withoutCapitalLetter =
