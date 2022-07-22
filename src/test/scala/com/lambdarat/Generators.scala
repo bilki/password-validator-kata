@@ -8,4 +8,10 @@ object Generators {
   lazy val fewerThanEightChars =
     Gen.listOfN(8, Arbitrary.arbChar.arbitrary).map(_.mkString)
 
+  lazy val withoutCapitalLetter =
+    for {
+      size   <- Gen.choose(9, 100)
+      output <- Gen.listOfN(size, Gen.alphaLowerChar)
+    } yield output.mkString
+
 }
