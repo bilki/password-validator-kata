@@ -16,7 +16,7 @@ Contains an underscore
 */
 
   test("All passwords with more than 8 characters must be valid") {
-    forAll(Generators.greaterThanEightCharsGen) { password =>
+    forAll(Generators.strAtLeastNGen(9, 100)) { password =>
       val result = PasswordValidator.validatePassword(password)
 
       val expected = true
@@ -24,5 +24,16 @@ Contains an underscore
       assertEquals(result, expected)
     }
   }
+
+  test("All passwords with fewer than 9 characters must be invalid") {
+    forAll(Generators.strAtLeastNGen(0, 8)) { password =>
+      val result = PasswordValidator.validatePassword(password)
+
+      val expected = false
+
+      assertEquals(result, expected)
+    }
+  }
+
 
 }

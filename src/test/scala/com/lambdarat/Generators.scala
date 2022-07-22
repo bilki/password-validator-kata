@@ -6,9 +6,9 @@ import org.scalacheck.Arbitrary.arbitrary
 
 object Generators {
 
-  lazy val greaterThanEightCharsGen: Gen[String] =
+  def strAtLeastNGen(size: Int, limit: Int): Gen[String] =
     for {
-      n    <- Gen.choose(9, 100)
+      n    <- Gen.choose(size, limit)
       head <- Gen.listOfN(n, arbitrary[Char])
     } yield head.mkString
   }
