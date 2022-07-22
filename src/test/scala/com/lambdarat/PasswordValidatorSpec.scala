@@ -35,4 +35,14 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
     }
   }
 
+  test("All passwords without at least one digit should validate to false") {
+    forAll(Generators.withoutNumber) { password =>
+      val result = PasswordValidator.validatePassword(password)
+
+      val expected = false
+
+      assertEquals(result, expected)
+    }
+  }
+
 }
