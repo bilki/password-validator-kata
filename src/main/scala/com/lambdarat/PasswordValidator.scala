@@ -33,14 +33,16 @@ object PasswordValidator {
     validatePasswordWithRules(password, validatePasswordRules)
 
   val validatePassword2Rules: List[Rule] = List(
-    sizeRuleWith(MIN_PASSWORD_SIZE_VALIDATION2)
+    sizeRuleWith(MIN_PASSWORD_SIZE_VALIDATION2),
+    upperCaseRule
   )
 
   def validatePassword2(password: String): Boolean =
     validatePasswordWithRules(password, validatePassword2Rules)
 
   val validatePassword3Rules: List[Rule] = List(
-    sizeRuleWith(MIN_PASSWORD_SIZE_VALIDATION3)
+    sizeRuleWith(MIN_PASSWORD_SIZE_VALIDATION3),
+    upperCaseRule
   )
 
   def validatePassword3(password: String): Boolean =
