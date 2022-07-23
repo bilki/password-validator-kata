@@ -1,6 +1,7 @@
 package com.lambdarat
 
 import munit.{FunSuite, ScalaCheckSuite}
+import org.scalacheck.Gen
 import org.scalacheck.Prop.{forAll, forAllNoShrink}
 
 import Generators._
@@ -38,53 +39,47 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
   val allValidatorCtx =
     List(validatePasswordCtx, validatePassword2Ctx, validatePassword3Ctx)
 
-  allValidatorCtx
-    .map(ctx => fewerOrEqualThan(ctx.minPasswordSize) -> ctx)
-    .foreach { case (passwordGen, ctx) =>
-      test(
-        s"All passwords with fewer or equal number of allowed chars should validate to false for ${ctx.name}"
-      ) {
-        forAll(passwordGen) { password =>
-          val result = ctx.validator(password)
+  type MinPasswordSizeGen = Int => Gen[String]
 
-          val expected = false
+  def testValidatorForRule(
+      ruleGenerator: MinPasswordSizeGen,
+      validatorContexts: List[ValidatorContext],
+      title: String
+  ) = {
+    validatorContexts
+      .map(ctx => ruleGenerator(ctx.minPasswordSize) -> ctx)
+      .foreach { case (passwordGen, ctx) =>
+        test(
+          s"$title for ${ctx.name}"
+        ) {
+          forAll(passwordGen) { password =>
+            val result = ctx.validator(password)
 
-          assertEquals(result, expected)
+            val expected = false
+
+            assertEquals(result, expected)
+          }
         }
       }
-    }
+  }
 
-  allValidatorCtx
-    .map(ctx => withoutCapitalLetter(ctx.minPasswordSize) -> ctx)
-    .foreach { case (passwordGen, ctx) =>
-      test(
-        s"All passwords without at least one capital letter should validate to false for ${ctx.name}"
-      ) {
-        forAll(passwordGen) { password =>
-          val result = ctx.validator(password)
+  testValidatorForRule(
+    fewerOrEqualThan,
+    allValidatorCtx,
+    "All passwords with fewer or equal number of allowed chars should validate to false"
+  )
 
-          val expected = false
+  testValidatorForRule(
+    withoutCapitalLetter,
+    allValidatorCtx,
+    "All passwords without at least one capital letter should validate to false"
+  )
 
-          assertEquals(result, expected)
-        }
-      }
-    }
-
-  allValidatorCtx
-    .map(ctx => withoutLowerCaseLetter(ctx.minPasswordSize) -> ctx)
-    .foreach { case (passwordGen, ctx) =>
-      test(
-        s"All passwords without at least one lowercase letter should validate to false for ${ctx.name}"
-      ) {
-        forAll(passwordGen) { password =>
-          val result = ctx.validator(password)
-
-          val expected = false
-
-          assertEquals(result, expected)
-        }
-      }
-    }
+  testValidatorForRule(
+    withoutCapitalLetter,
+    allValidatorCtx,
+    "All passwords without at least one lowercase letter should validate to false"
+  )
 
   test("All passwords without at least one digit should validate to false") {
     forAll(Generators.withoutNumber) { password =>
