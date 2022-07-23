@@ -6,17 +6,13 @@ import org.scalacheck.Prop.{forAll, forAllNoShrink}
 
 import Generators._
 
-import PasswordValidator.{
-  MIN_PASSWORD_SIZE_VALIDATION,
-  MIN_PASSWORD_SIZE_VALIDATION2,
-  MIN_PASSWORD_SIZE_VALIDATION3
-}
+import PasswordValidator._
 
 class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
 
   case class ValidatorContext(
       name: String,
-      validator: String => Boolean,
+      validator: String => ValidatedPassword,
       minPasswordSize: Int
   )
 
@@ -57,7 +53,7 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
 
             val expected = false
 
-            assertEquals(result, expected)
+            assertEquals(result.isValid, expected)
           }
         }
       }
@@ -112,7 +108,7 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
 
         val expected = validatesTo
 
-        assertEquals(result, expected)
+        assertEquals(result.isValid, expected)
       }
     )
 

@@ -1,5 +1,8 @@
 package com.lambdarat
 
+import cats.data.ValidatedNec
+import cats.data.Validated.{invalidNec, validNec}
+
 object PasswordValidator {
 
   val MIN_PASSWORD_SIZE_VALIDATION  = 8
@@ -24,12 +27,20 @@ object PasswordValidator {
     underscoreRule
   )
 
-  def validatePasswordWithRules(password: String, rules: List[Rule]): Boolean =
+  type ValidatedPassword = ValidatedNec[PasswordValidationError, String]
+
+  def validatePasswordWithRules(
+      password: String,
+      rules: List[Rule]
+  ): ValidatedPassword = {
     rules.foldLeft(true) { case (isValidPassword, nextRule) =>
       isValidPassword && nextRule(password)
     }
 
-  def validatePassword(password: String): Boolean =
+    validNec(password)
+  }
+
+  def validatePassword(password: String): ValidatedPassword =
     validatePasswordWithRules(password, validatePasswordRules)
 
   val validatePassword2Rules: List[Rule] = List(
@@ -39,7 +50,7 @@ object PasswordValidator {
     digitRule
   )
 
-  def validatePassword2(password: String): Boolean =
+  def validatePassword2(password: String): ValidatedPassword =
     validatePasswordWithRules(password, validatePassword2Rules)
 
   val validatePassword3Rules: List[Rule] = List(
@@ -49,6 +60,6 @@ object PasswordValidator {
     underscoreRule
   )
 
-  def validatePassword3(password: String): Boolean =
+  def validatePassword3(password: String): ValidatedPassword =
     validatePasswordWithRules(password, validatePassword3Rules)
 }
