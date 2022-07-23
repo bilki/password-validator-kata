@@ -72,7 +72,7 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
   )
 
   testValidatorForRule(
-    withoutCapitalLetter,
+    withoutLowerCaseLetter,
     allValidatorCtx,
     "All passwords without at least one lowercase letter should validate to false"
   )
