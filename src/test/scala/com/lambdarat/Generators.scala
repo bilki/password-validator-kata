@@ -12,9 +12,13 @@ object Generators {
       .listOfN(numberOfChars, Arbitrary.arbChar.arbitrary)
       .map(_.mkString)
 
-  def withOnly(minPasswordSize: Int, charsOf: Gen[Char]): Gen[String] =
+  def withOnly(
+      minPasswordSize: Int,
+      charsOf: Gen[Char],
+      maxPasswordSize: Int = 100
+  ): Gen[String] =
     for {
-      size   <- Gen.choose(minPasswordSize, 100)
+      size   <- Gen.choose(minPasswordSize, maxPasswordSize)
       output <- Gen.listOfN(size, charsOf)
     } yield output.mkString
 
