@@ -1,5 +1,7 @@
 package com.lambdarat
 
+import cats.data.NonEmptyChain
+import cats.data.Validated
 import cats.data.Validated.invalidNec
 import cats.data.Validated.validNec
 import cats.data.ValidatedNec
@@ -67,5 +69,19 @@ object PasswordValidator {
   def validatePassword3(password: String): ValidatedPassword =
     validatePasswordWithRules(password, validatePassword3Rules)
 
-  def validatePassword4(password: String): ValidatedPassword = ???
+  val validatePassword4Rules: List[Rule] = List(
+    sizeRuleWith(MIN_PASSWORD_SIZE_VALIDATION),
+    upperCaseRule,
+    digitRule,
+    underscoreRule
+  )
+
+  def validatePassword4(password: String): ValidatedPassword =
+    validatePasswordWithRules(password, validatePassword4Rules)
+      .handleErrorWith { nec =>
+        if (nec.tail.isEmpty)
+          password.validNec
+        else
+          nec.invalid
+      }
 }
