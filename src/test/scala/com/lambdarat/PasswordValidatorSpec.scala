@@ -45,7 +45,7 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
       ruleGenerator: MinPasswordSizeGen,
       validatorContexts: List[ValidatorContext],
       title: String
-  ) = {
+  ): Unit = {
     validatorContexts
       .map(ctx => ruleGenerator(ctx.minPasswordSize) -> ctx)
       .foreach { case (passwordGen, ctx) =>
@@ -97,6 +97,95 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
     withoutUnderscore(withDigit = false),
     List(validatePassword3Ctx),
     "All passwords without at least one underscore should validate to false"
+  )
+
+  def testValidatorWithExamples(
+      ctx: ValidatorContext,
+      examples: List[String],
+      validatesTo: Boolean
+  ): Unit =
+    examples.foreach(password =>
+      test(
+        s"${ctx.name} should validate ${password} example as ${validatesTo}"
+      ) {
+        val result = ctx.validator(password)
+
+        val expected = validatesTo
+
+        assertEquals(result, expected)
+      }
+    )
+
+  testValidatorWithExamples(
+    validatePasswordCtx,
+    List(
+      "abcdE12_B",
+      "_1abcdE12",
+      "B3abcdE12_",
+      "JabcdE12_B&",
+      "$abcd_E12a_B"
+    ),
+    validatesTo = true
+  )
+
+  testValidatorWithExamples(
+    validatePasswordCtx,
+    List(
+      "aB_1",
+      "11abcdE12",
+      "BabcdE_jq",
+      "abcdefg1234_",
+      "%abcd1234_5"
+    ),
+    validatesTo = false
+  )
+
+  testValidatorWithExamples(
+    validatePassword2Ctx,
+    List(
+      "abcD123",
+      "1Dabc23",
+      "DBCab321",
+      "&abcA321$",
+      "32_1abcE"
+    ),
+    validatesTo = true
+  )
+
+  testValidatorWithExamples(
+    validatePassword2Ctx,
+    List(
+      "aB1",
+      "abcdeFGHIJ",
+      "BabcdE_jq",
+      "abcdefg1234_",
+      "%abcd1234_5"
+    ),
+    validatesTo = false
+  )
+
+  testValidatorWithExamples(
+    validatePassword3Ctx,
+    List(
+      "abcdefghABCDEFGH_",
+      "abcdef123ABCDEFGH_",
+      "_ABabcdefghABCDEFGH123",
+      "%_ABabcdefghABCDEFGH_",
+      "$$$$$$aB_$$$$$$$$$$$$$"
+    ),
+    validatesTo = true
+  )
+
+  testValidatorWithExamples(
+    validatePassword3Ctx,
+    List(
+      "aB_1",
+      "abcdef123ABCDEFGHIJK",
+      "abcdefghijABCDEFGHIJK",
+      "_abcdefghijlkmknksuiudf%%",
+      "______%%ABCDEFGHIJILKLJMM"
+    ),
+    validatesTo = false
   )
 
 }
