@@ -12,9 +12,9 @@ object Generators {
       .listOfN(numberOfChars, Arbitrary.arbChar.arbitrary)
       .map(_.mkString)
 
-  lazy val withoutCapitalLetter =
+  def withoutCapitalLetter(minPasswordSize: Int): Gen[String] =
     for {
-      size   <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
+      size   <- Gen.choose(minPasswordSize, 100)
       output <- Gen.listOfN(size, Gen.alphaLowerChar)
     } yield output.mkString
 
