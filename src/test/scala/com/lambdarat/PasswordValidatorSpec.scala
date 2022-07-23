@@ -81,15 +81,11 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
     "All passwords without at least one lowercase letter should validate to false"
   )
 
-  test("All passwords without at least one digit should validate to false") {
-    forAll(Generators.withoutNumber) { password =>
-      val result = PasswordValidator.validatePassword(password)
-
-      val expected = false
-
-      assertEquals(result, expected)
-    }
-  }
+  testValidatorForRule(
+    withoutNumber,
+    List(validatePasswordCtx, validatePassword2Ctx),
+    "All passwords without at least one digit should validate to false"
+  )
 
   test(
     "All passwords without at least one underscore should validate to false"
