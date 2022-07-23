@@ -1,14 +1,21 @@
 package com.lambdarat
 
-import munit.{FunSuite, ScalaCheckSuite}
+import cats.data.NonEmptyChain
+import cats.data.Validated.Invalid
+import cats.data.Validated.Valid
+import cats.kernel.Eq
+import munit.FunSuite
+import munit.ScalaCheckSuite
 import org.scalacheck.Gen
-import org.scalacheck.Prop.{forAll, forAllNoShrink}
+import org.scalacheck.Prop.forAll
+import org.scalacheck.Prop.forAllNoShrink
 
 import Generators._
-
 import PasswordValidator._
 
 class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
+
+  implicit val errorEq: Eq[PasswordValidationError] = Eq.fromUniversalEquals
 
   case class ValidatorContext(
       name: String,
@@ -40,7 +47,8 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
   def testValidatorForRule(
       ruleGenerator: MinPasswordSizeGen,
       validatorContexts: List[ValidatorContext],
-      title: String
+      title: String,
+      expectedError: PasswordValidationError
   ): Unit = {
     validatorContexts
       .map(ctx => ruleGenerator(ctx.minPasswordSize) -> ctx)
@@ -51,9 +59,17 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
           forAll(passwordGen) { password =>
             val result = ctx.validator(password)
 
-            val expected = false
+            val expected = expectedError
 
-            assertEquals(result.isValid, expected)
+            result match {
+              case Invalid(errors) =>
+                assert(clue(errors).contains(clue(expected)))
+              case Valid(_) =>
+                fail(
+                  "Validation returned a correct password instead of errors",
+                  clues(result)
+                )
+            }
           }
         }
       }
@@ -62,37 +78,43 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
   testValidatorForRule(
     fewerOrEqualThan,
     allValidatorCtx,
-    "All passwords with fewer or equal number of allowed chars should validate to false"
+    "All passwords with fewer or equal number of allowed chars should validate to false",
+    PasswordValidationError.MinPasswordSize
   )
 
   testValidatorForRule(
     withoutCapitalLetter,
     allValidatorCtx,
-    "All passwords without at least one capital letter should validate to false"
+    "All passwords without at least one capital letter should validate to false",
+    PasswordValidationError.DoesNotContainCapital
   )
 
   testValidatorForRule(
     withoutLowerCaseLetter,
     allValidatorCtx,
-    "All passwords without at least one lowercase letter should validate to false"
+    "All passwords without at least one lowercase letter should validate to false",
+    PasswordValidationError.DoesNotContainLowercase
   )
 
   testValidatorForRule(
     withoutNumber,
     List(validatePasswordCtx, validatePassword2Ctx),
-    "All passwords without at least one digit should validate to false"
+    "All passwords without at least one digit should validate to false",
+    PasswordValidationError.DoesNotContainDigit
   )
 
   testValidatorForRule(
     withoutUnderscore(withDigit = true),
     List(validatePasswordCtx),
-    "All passwords without at least one underscore should validate to false"
+    "All passwords without at least one underscore should validate to false",
+    PasswordValidationError.DoesNotContainUnderscore
   )
 
   testValidatorForRule(
     withoutUnderscore(withDigit = false),
     List(validatePassword3Ctx),
-    "All passwords without at least one underscore should validate to false"
+    "All passwords without at least one underscore should validate to false",
+    PasswordValidationError.DoesNotContainUnderscore
   )
 
   def testValidatorWithExamples(

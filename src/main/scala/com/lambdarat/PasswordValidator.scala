@@ -1,8 +1,8 @@
 package com.lambdarat
 
+import cats.data.Validated.invalidNec
+import cats.data.Validated.validNec
 import cats.data.ValidatedNec
-import cats.data.Validated.{invalidNec, validNec}
-
 import cats.syntax.all._
 
 import PasswordValidationError._
