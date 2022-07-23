@@ -66,4 +66,6 @@ object PasswordValidator {
 
   def validatePassword3(password: String): ValidatedPassword =
     validatePasswordWithRules(password, validatePassword3Rules)
+
+  def validatePassword4(password: String): ValidatedPassword = ???
 }

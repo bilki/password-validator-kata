@@ -40,6 +40,11 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
     PasswordValidator.validatePassword3,
     MIN_PASSWORD_SIZE_VALIDATION3
   )
+  val validatePassword4Ctx = ValidatorContext(
+    "validatePassword4",
+    PasswordValidator.validatePassword4,
+    MIN_PASSWORD_SIZE_VALIDATION
+  )
 
   val allValidatorCtx =
     List(validatePasswordCtx, validatePassword2Ctx, validatePassword3Ctx)
@@ -232,6 +237,33 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
       "______%%12347234778290089" -> NonEmptyChain(
         DoesNotContainLowercase,
         DoesNotContainCapital
+      )
+    )
+  )
+
+  testValidatorWithValidExamples(
+    validatePassword4Ctx,
+    List(
+      "&&12BC_",   // Min password size
+      "12__&&abc", // No capital letters
+      "$ab_BC$%&", // No digits
+      "BCD123456", // No underscore
+      "123ABC___"
+    )
+  )
+
+  testValidatorWithInvalidExamples(
+    validatePassword4Ctx,
+    Map(
+      "abcB1" -> NonEmptyChain(MinPasswordSize, DoesNotContainUnderscore),
+      "abcdEFGH$" -> NonEmptyChain(
+        DoesNotContainDigit,
+        DoesNotContainUnderscore
+      ),
+      "__abcde$$" -> NonEmptyChain(DoesNotContainDigit, DoesNotContainCapital),
+      "%%1234xxx" -> NonEmptyChain(
+        DoesNotContainCapital,
+        DoesNotContainUnderscore
       )
     )
   )
