@@ -12,32 +12,28 @@ object Generators {
       .listOfN(numberOfChars, Arbitrary.arbChar.arbitrary)
       .map(_.mkString)
 
-  def withoutCapitalLetter(minPasswordSize: Int): Gen[String] =
+  def withOnly(minPasswordSize: Int, charsOf: Gen[Char]): Gen[String] =
     for {
       size   <- Gen.choose(minPasswordSize, 100)
-      output <- Gen.listOfN(size, Gen.alphaLowerChar)
+      output <- Gen.listOfN(size, charsOf)
     } yield output.mkString
+
+  def withoutCapitalLetter(minPasswordSize: Int): Gen[String] =
+    withOnly(minPasswordSize, Gen.alphaLowerChar)
 
   def withoutLowerCaseLetter(minPasswordSize: Int): Gen[String] =
-    for {
-      size   <- Gen.choose(minPasswordSize, 100)
-      output <- Gen.listOfN(size, Gen.alphaUpperChar)
-    } yield output.mkString
+    withOnly(minPasswordSize, Gen.alphaUpperChar)
 
   def withoutNumber(minPasswordSize: Int): Gen[String] =
-    for {
-      size   <- Gen.choose(minPasswordSize, 100)
-      output <- Gen.listOfN(size, Gen.alphaChar)
-    } yield output.mkString
+    withOnly(minPasswordSize, Gen.alphaChar)
 
   def withoutUnderscore(withDigit: Boolean)(minPasswordSize: Int) =
     for {
-      size         <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
-      basePassword <- Gen.listOfN(size, Gen.alphaChar).map(_.mkString)
-      idxs         <- Gen.pick(if (withDigit) 3 else 2, 0 until size)
-      capital      <- Gen.alphaUpperChar
-      lower        <- Gen.alphaLowerChar
-      digit        <- Gen.alphaNumChar
+      basePassword <- withOnly(minPasswordSize, Gen.alphaChar)
+      idxs    <- Gen.pick(if (withDigit) 3 else 2, 0 until basePassword.size)
+      capital <- Gen.alphaUpperChar
+      lower   <- Gen.alphaLowerChar
+      digit   <- Gen.alphaNumChar
       replacements =
         if (withDigit)
           List(capital, lower, digit)
