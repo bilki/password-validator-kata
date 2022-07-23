@@ -18,9 +18,9 @@ object Generators {
       output <- Gen.listOfN(size, Gen.alphaLowerChar)
     } yield output.mkString
 
-  lazy val withoutLowerCaseLetter =
+  def withoutLowerCaseLetter(minPasswordSize: Int): Gen[String] =
     for {
-      size   <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
+      size   <- Gen.choose(minPasswordSize, 100)
       output <- Gen.listOfN(size, Gen.alphaUpperChar)
     } yield output.mkString
 
