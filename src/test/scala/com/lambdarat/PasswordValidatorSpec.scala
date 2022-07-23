@@ -4,12 +4,14 @@ import cats.data.NonEmptyChain
 import cats.data.Validated.Invalid
 import cats.data.Validated.Valid
 import cats.kernel.Eq
+import cats.syntax.all._
 import munit.FunSuite
 import munit.ScalaCheckSuite
 import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
 import org.scalacheck.Prop.forAllNoShrink
 
+import PasswordValidationError._
 import Generators._
 import PasswordValidator._
 
@@ -79,62 +81,88 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
     fewerOrEqualThan,
     allValidatorCtx,
     "All passwords with fewer or equal number of allowed chars should validate to false",
-    PasswordValidationError.MinPasswordSize
+    MinPasswordSize
   )
 
   testValidatorForRule(
     withoutCapitalLetter,
     allValidatorCtx,
     "All passwords without at least one capital letter should validate to false",
-    PasswordValidationError.DoesNotContainCapital
+    DoesNotContainCapital
   )
 
   testValidatorForRule(
     withoutLowerCaseLetter,
     allValidatorCtx,
     "All passwords without at least one lowercase letter should validate to false",
-    PasswordValidationError.DoesNotContainLowercase
+    DoesNotContainLowercase
   )
 
   testValidatorForRule(
     withoutNumber,
     List(validatePasswordCtx, validatePassword2Ctx),
     "All passwords without at least one digit should validate to false",
-    PasswordValidationError.DoesNotContainDigit
+    DoesNotContainDigit
   )
 
   testValidatorForRule(
     withoutUnderscore(withDigit = true),
     List(validatePasswordCtx),
     "All passwords without at least one underscore should validate to false",
-    PasswordValidationError.DoesNotContainUnderscore
+    DoesNotContainUnderscore
   )
 
   testValidatorForRule(
     withoutUnderscore(withDigit = false),
     List(validatePassword3Ctx),
     "All passwords without at least one underscore should validate to false",
-    PasswordValidationError.DoesNotContainUnderscore
+    DoesNotContainUnderscore
   )
 
-  def testValidatorWithExamples(
+  def testValidatorWithValidExamples(
       ctx: ValidatorContext,
-      examples: List[String],
-      validatesTo: Boolean
+      examples: List[String]
   ): Unit =
     examples.foreach(password =>
       test(
-        s"${ctx.name} should validate ${password} example as ${validatesTo}"
+        s"${ctx.name} should validate ${password} example as correct"
       ) {
         val result = ctx.validator(password)
 
-        val expected = validatesTo
+        val expected = true
 
         assertEquals(result.isValid, expected)
       }
     )
 
-  testValidatorWithExamples(
+  def testValidatorWithInvalidExamples(
+      ctx: ValidatorContext,
+      examples: Map[String, NonEmptyChain[PasswordValidationError]]
+  ): Unit =
+    examples.foreach { case (password, expectedErrors) =>
+      val expectedErrorsStr = expectedErrors.toChain.toList.mkString(",")
+
+      test(
+        s"${ctx.name} should validate ${password} example as incorrect with ${expectedErrorsStr}"
+      ) {
+        val result = ctx.validator(password)
+
+        val expected = expectedErrors
+
+        result match {
+          case Invalid(errors) =>
+            assertEquals(errors.size, expected.size)
+            assert(clue(expected).forall(clue(errors).contains))
+          case Valid(_) =>
+            fail(
+              "Validation returned a correct password instead of errors",
+              clues(result)
+            )
+        }
+      }
+    }
+
+  testValidatorWithValidExamples(
     validatePasswordCtx,
     List(
       "abcdE12_B",
@@ -142,23 +170,21 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
       "B3abcdE12_",
       "JabcdE12_B&",
       "$abcd_E12a_B"
-    ),
-    validatesTo = true
+    )
   )
 
-  testValidatorWithExamples(
+  testValidatorWithInvalidExamples(
     validatePasswordCtx,
-    List(
-      "aB_1",
-      "11abcdE12",
-      "BabcdE_jq",
-      "a1234_",
-      "%abcd1234_5"
-    ),
-    validatesTo = false
+    Map(
+      "aB_1"        -> NonEmptyChain(MinPasswordSize),
+      "11abcdE12"   -> NonEmptyChain(DoesNotContainUnderscore),
+      "BabcdE_jq"   -> NonEmptyChain(DoesNotContainDigit),
+      "a1234_"      -> NonEmptyChain(MinPasswordSize, DoesNotContainCapital),
+      "%abcd1234_5" -> NonEmptyChain(DoesNotContainCapital)
+    )
   )
 
-  testValidatorWithExamples(
+  testValidatorWithValidExamples(
     validatePassword2Ctx,
     List(
       "abcD123",
@@ -166,23 +192,25 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
       "DBCab321",
       "&abcA321$",
       "32_1abcE"
-    ),
-    validatesTo = true
+    )
   )
 
-  testValidatorWithExamples(
+  testValidatorWithInvalidExamples(
     validatePassword2Ctx,
-    List(
-      "aB1",
-      "abcdeFGHIJ",
-      "BabcdE_jq",
-      "abcdefg1234_",
-      "%abcd1234_5"
-    ),
-    validatesTo = false
+    Map(
+      "aB1"            -> NonEmptyChain(MinPasswordSize),
+      "abcdeFGHIJ"     -> NonEmptyChain(DoesNotContainDigit),
+      "BabcdE_jq"      -> NonEmptyChain(DoesNotContainDigit),
+      "abcdefg1234577" -> NonEmptyChain(DoesNotContainCapital),
+      "%abcd1234_5"    -> NonEmptyChain(DoesNotContainCapital),
+      "%ABCIDSEISLIEAS" -> NonEmptyChain(
+        DoesNotContainLowercase,
+        DoesNotContainDigit
+      )
+    )
   )
 
-  testValidatorWithExamples(
+  testValidatorWithValidExamples(
     validatePassword3Ctx,
     List(
       "abcdefghABCDEFGH_",
@@ -190,20 +218,22 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
       "_ABabcdefghABCDEFGH123",
       "%_ABabcdefghABCDEFGH_",
       "$$$$$$aB_$$$$$$$$$$$$$"
-    ),
-    validatesTo = true
+    )
   )
 
-  testValidatorWithExamples(
+  testValidatorWithInvalidExamples(
     validatePassword3Ctx,
-    List(
-      "aB_1",
-      "abcdef123ABCDEFGHIJK",
-      "abcdefghijABCDEFGHIJK",
-      "_abcdefghijlkmknksuiudf%%",
-      "______%%ABCDEFGHIJILKLJMM"
-    ),
-    validatesTo = false
+    Map(
+      "aB_1"                      -> NonEmptyChain(MinPasswordSize),
+      "abcdef123ABCDEFGHIJK"      -> NonEmptyChain(DoesNotContainUnderscore),
+      "abcdefghijABCDEFGHIJK"     -> NonEmptyChain(DoesNotContainUnderscore),
+      "_abcdefghijlkmknksuiudf%%" -> NonEmptyChain(DoesNotContainCapital),
+      "______%%ABCDEFGHIJILKLJMM" -> NonEmptyChain(DoesNotContainLowercase),
+      "______%%12347234778290089" -> NonEmptyChain(
+        DoesNotContainLowercase,
+        DoesNotContainCapital
+      )
+    )
   )
 
 }
