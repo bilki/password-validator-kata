@@ -3,6 +3,10 @@ package com.lambdarat
 import cats.data.ValidatedNec
 import cats.data.Validated.{invalidNec, validNec}
 
+import cats.syntax.all._
+
+import PasswordValidationError._
+
 object PasswordValidator {
 
   val MIN_PASSWORD_SIZE_VALIDATION  = 8
@@ -10,14 +14,15 @@ object PasswordValidator {
   val MIN_PASSWORD_SIZE_VALIDATION3 = 16
   val PASSWORD_UNDERSCORE           = '_'
 
-  type Rule = String => Boolean
+  case class Rule(predicate: String => Boolean, error: PasswordValidationError)
 
-  def sizeRuleWith(min: Int): Rule = _.size > min
+  def sizeRuleWith(min: Int): Rule = Rule(_.size > min, MinPasswordSize)
 
-  val upperCaseRule: Rule  = _.exists(_.isUpper)
-  val lowerCaseRule: Rule  = _.exists(_.isLower)
-  val digitRule: Rule      = _.exists(_.isDigit)
-  val underscoreRule: Rule = _.exists(_ == PASSWORD_UNDERSCORE)
+  val upperCaseRule: Rule = Rule(_.exists(_.isUpper), DoesNotContainCapital)
+  val lowerCaseRule: Rule = Rule(_.exists(_.isLower), DoesNotContainLowercase)
+  val digitRule: Rule     = Rule(_.exists(_.isDigit), DoesNotContainDigit)
+  val underscoreRule: Rule =
+    Rule(_.exists(_ == PASSWORD_UNDERSCORE), DoesNotContainUnderscore)
 
   val validatePasswordRules: List[Rule] = List(
     sizeRuleWith(MIN_PASSWORD_SIZE_VALIDATION),
@@ -33,11 +38,10 @@ object PasswordValidator {
       password: String,
       rules: List[Rule]
   ): ValidatedPassword = {
-    rules.foldLeft(true) { case (isValidPassword, nextRule) =>
-      isValidPassword && nextRule(password)
-    }
-
-    validNec(password)
+    rules.map { rule =>
+      if (rule.predicate(password)) validNec(password)
+      else invalidNec(rule.error)
+    }.combineAll
   }
 
   def validatePassword(password: String): ValidatedPassword =

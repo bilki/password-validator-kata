@@ -130,7 +130,7 @@ class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
       "aB_1",
       "11abcdE12",
       "BabcdE_jq",
-      "abcdefg1234_",
+      "a1234_",
       "%abcd1234_5"
     ),
     validatesTo = false
