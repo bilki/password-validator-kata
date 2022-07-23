@@ -5,14 +5,29 @@ import org.scalacheck.Prop.{forAll, forAllNoShrink}
 
 import Generators._
 
-import PasswordValidator.MIN_PASSWORD_SIZE
+import PasswordValidator.{
+  MIN_PASSWORD_SIZE_VALIDATION,
+  MIN_PASSWORD_SIZE_VALIDATION2,
+  MIN_PASSWORD_SIZE_VALIDATION3
+}
 
 class PasswordValidatorSpec extends FunSuite with ScalaCheckSuite {
 
+  val genForValidatePassword =
+    fewerOrEqualThan(
+      MIN_PASSWORD_SIZE_VALIDATION
+    ) -> PasswordValidator.validatePassword _
+  val genForValidatePassword2 = fewerOrEqualThan(
+    MIN_PASSWORD_SIZE_VALIDATION2
+  ) -> PasswordValidator.validatePassword2 _
+  val genForValidatePassword3 = fewerOrEqualThan(
+    MIN_PASSWORD_SIZE_VALIDATION3
+  ) -> PasswordValidator.validatePassword3 _
+
   List(
-    fewerOrEqualThan(MIN_PASSWORD_SIZE) -> PasswordValidator.validatePassword _,
-    fewerOrEqualThan(6)  -> PasswordValidator.validatePassword2 _,
-    fewerOrEqualThan(16) -> PasswordValidator.validatePassword3 _
+    genForValidatePassword,
+    genForValidatePassword2,
+    genForValidatePassword3
   ).foreach { case (passwordGen, validator) =>
     test(
       "All passwords with fewer or equal number of allowed chars should validate to false"

@@ -3,7 +3,7 @@ package com.lambdarat
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 
-import PasswordValidator.MIN_PASSWORD_SIZE
+import PasswordValidator.MIN_PASSWORD_SIZE_VALIDATION
 
 object Generators {
 
@@ -14,25 +14,25 @@ object Generators {
 
   lazy val withoutCapitalLetter =
     for {
-      size   <- Gen.choose(MIN_PASSWORD_SIZE, 100)
+      size   <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
       output <- Gen.listOfN(size, Gen.alphaLowerChar)
     } yield output.mkString
 
   lazy val withoutLowerCaseLetter =
     for {
-      size   <- Gen.choose(MIN_PASSWORD_SIZE, 100)
+      size   <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
       output <- Gen.listOfN(size, Gen.alphaUpperChar)
     } yield output.mkString
 
   lazy val withoutNumber =
     for {
-      size   <- Gen.choose(MIN_PASSWORD_SIZE, 100)
+      size   <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
       output <- Gen.listOfN(size, Gen.alphaChar)
     } yield output.mkString
 
   lazy val withoutUnderscore =
     for {
-      size         <- Gen.choose(MIN_PASSWORD_SIZE, 100)
+      size         <- Gen.choose(MIN_PASSWORD_SIZE_VALIDATION, 100)
       basePassword <- Gen.listOfN(size, Gen.alphaChar).map(_.mkString)
       idxs         <- Gen.pick(3, 0 until size)
       capital      <- Gen.alphaUpperChar
